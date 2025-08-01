@@ -267,12 +267,25 @@ function MyFileSection() {
     if (!file) return;
     setUploading(true);
     setLink('');
-    const userId = getUserId();
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setSnackbar({ open: true, message: 'Please login first', severity: 'error' });
+      setUploading(false);
+      return;
+    }
+    
     const formData = new FormData();
     formData.append('video', file);
-    formData.append('userId', userId);
+    
     try {
-      const res = await fetch('https://hubboxbackend.onrender.com/api/video/upload', { method: 'POST', body: formData });
+      const res = await fetch('https://hubboxbackend.onrender.com/api/video/upload', { 
+        method: 'POST', 
+        headers: {
+          'Authorization': 'Bearer ' + token
+        },
+        body: formData 
+      });
       const data = await res.json();
       if (res.ok) {
         // Create deep link for HubBox app
@@ -285,6 +298,7 @@ function MyFileSection() {
         setSnackbar({ open: true, message: data.message || 'Upload failed', severity: 'error' });
       }
     } catch (err) {
+      console.error('Upload error:', err);
       setSnackbar({ open: true, message: 'Upload failed', severity: 'error' });
     } finally {
       setUploading(false);

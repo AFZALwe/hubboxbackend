@@ -48,16 +48,20 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Upload video
-router.post('/upload', upload.single('video'), async (req, res) => {
+router.post('/upload', auth, upload.single('video'), async (req, res) => {
   try {
     console.log('Upload request:', req.body, req.file);
-    const { userId } = req.body;
-    if (!req.file || !userId) return res.status(400).json({ message: 'Video file and userId required' });
+    if (!req.file) return res.status(400).json({ message: 'Video file required' });
+    
     const videoId = uuidv4();
     const url = `/uploads/${req.file.filename}`;
-    const video = new Video({ user: userId, url, videoId });
+    const video = new Video({ user: req.user.id, url, videoId });
     await video.save();
-    res.json({ link: `${req.protocol}://${req.get('host')}/v/${videoId}`, videoId });
+    
+    res.json({ 
+      link: `${req.protocol}://${req.get('host')}/v/${videoId}`, 
+      videoId 
+    });
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ message: 'Upload failed', error: err.message });
